@@ -1,0 +1,15 @@
+llama-index
+langchain
+ipython
+ipykernel
+ipywidgets
+pypdf
+ragas
+openai
+pgvector
+psycopg2
+psycopg2-binary
+asyncpg
+sqlalchemy
+greenlet
+aspose-pdf
