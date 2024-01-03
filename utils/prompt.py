@@ -1,4 +1,6 @@
+import os
 import tiktoken
+
 from datetime import datetime
 
 
@@ -13,7 +15,7 @@ def get_std_knowledge_prompt(memory):
     prompt = "--- KNOWLEDGE:\n"
     for resource_name, info in memory.items():
         prompt += f"{iteration}. {resource_name}.{info['filetype']}\n"
-        prompt += f"Doc URL: https://platform-staging-api.feedloop.ai/download/{info['project_id']}/{resource_name}.{info['filetype']}\n"
+        prompt += f"Doc URL: {os.getenv('BASE_URL')}{info['project_id']}/{resource_name}.{info['filetype']}\n"
         iteration += 1
 
         prompt += f"Facts:\n"
@@ -31,7 +33,7 @@ def get_context_knowledge_prompt(memory):
     prompt = "--- KNOWLEDGE:\n"
     for resource_name, info in memory.items():
         prompt += f"{iteration}. {resource_name}.{info['filetype']}\n"
-        prompt += f"Doc URL: https://platform-staging-api.feedloop.ai/download/{info['project_id']}/{resource_name}.{info['filetype']}\n"
+        prompt += f"Doc URL: {os.getenv('BASE_URL')}{info['project_id']}/{resource_name}.{info['filetype']}\n"
         iteration += 1
 
         count_ctx = 1
