@@ -13,3 +13,4 @@ asyncpg
 sqlalchemy
 greenlet
 aspose-pdf
+tiktoken
