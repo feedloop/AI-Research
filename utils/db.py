@@ -13,8 +13,7 @@ def get_retrieved_knowledge(cursor, query, resource_ids, top_k):
     query = """
     SELECT 
         c.id,
-        c.fact AS content,
-        json_build_object('number', c.number, 'summary', c.summary, 'filetype', m.filetype, 'name', r.name)::jsonb AS metadata,
+        json_build_object('context', c.context, 'fact', c.fact, 'number', c.number, 'summary', c.summary, 'filetype', m.filetype, 'name', r.name, 'project', r.project_id)::jsonb AS metadata,
         1 - (c.embeddings <-> %(query_embedding)s::vector) AS similarity
     FROM fact c JOIN resource r ON c.resource_id = r.id JOIN metadata m ON r.id = m.resource_id
     WHERE c.resource_id = ANY (%(resource_ids)s::UUID[])
