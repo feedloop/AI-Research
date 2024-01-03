@@ -10,12 +10,18 @@ def count_tokens_tiktoken(string, encoding_name="cl100k_base"):
     return num_tokens
 
 
+def get_base_knowledge_prompt(prompt, iteration, resource_name, info):
+    prompt += f"{iteration}. {resource_name}.{info['filetype']}\n"
+    prompt += f"Doc URL: {os.getenv('BASE_URL')}{info['project_id']}/{resource_name}.{info['filetype']}\n"
+
+    return prompt
+
+
 def get_std_knowledge_prompt(memory):
     iteration = 1
     prompt = "--- KNOWLEDGE:\n"
     for resource_name, info in memory.items():
-        prompt += f"{iteration}. {resource_name}.{info['filetype']}\n"
-        prompt += f"Doc URL: {os.getenv('BASE_URL')}{info['project_id']}/{resource_name}.{info['filetype']}\n"
+        prompt = get_base_knowledge_prompt(prompt, iteration, resource_name, info)
         iteration += 1
 
         prompt += f"Facts:\n"
@@ -28,12 +34,32 @@ def get_std_knowledge_prompt(memory):
     return prompt
 
 
+def get_auto_merge_knowledge_prompt(memory):
+    iteration = 1
+    prompt = "--- KNOWLEDGE:\n"
+    for resource_name, info in memory.items():
+        prompt = get_base_knowledge_prompt(prompt, iteration, resource_name, info)
+        iteration += 1
+
+        prompt += f"Facts:\n"
+        for context, facts in info["contexts"].items():
+            child_len = sum(len(fact) for fact in facts)
+            if child_len < len(context) // 2:
+                for fact in facts:
+                    prompt += f"- {fact}\n"
+            else:
+                prompt += f"- {context}\n"
+
+        prompt += "\n"
+
+    return prompt
+
+
 def get_context_knowledge_prompt(memory):
     iteration = 1
     prompt = "--- KNOWLEDGE:\n"
     for resource_name, info in memory.items():
-        prompt += f"{iteration}. {resource_name}.{info['filetype']}\n"
-        prompt += f"Doc URL: {os.getenv('BASE_URL')}{info['project_id']}/{resource_name}.{info['filetype']}\n"
+        prompt = get_base_knowledge_prompt(prompt, iteration, resource_name, info)
         iteration += 1
 
         count_ctx = 1
@@ -68,6 +94,8 @@ def get_knowledge_prompt(memory, config="context", token_threshold=500):
             cur_prompt = get_context_knowledge_prompt(sent_knowledge)
         elif config == "standard":
             cur_prompt = get_std_knowledge_prompt(sent_knowledge)
+        elif config == "auto_merge":
+            cur_prompt = get_auto_merge_knowledge_prompt(sent_knowledge)
 
         prompt_len = count_tokens_tiktoken(cur_prompt)
         if prompt_len > token_threshold:
