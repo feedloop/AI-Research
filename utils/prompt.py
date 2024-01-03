@@ -16,8 +16,8 @@ def get_std_knowledge_prompt(memory):
         prompt += f"Doc URL: https://platform-staging-api.feedloop.ai/download/{info['project_id']}/{resource_name}.{info['filetype']}\n"
         iteration += 1
 
+        prompt += f"Facts:\n"
         for _, facts in info["contexts"].items():
-            prompt += f"Facts:\n"
             for fact in facts:
                 prompt += f"- {fact}\n"
 
@@ -74,7 +74,9 @@ def get_knowledge_prompt(memory, config="context", token_threshold=500):
     return cur_prompt
 
 
-def get_chat_prompt(question, memory, config="context", memory_max_tokens=500):
+def get_chat_prompt(
+    question, memory, config="context", memory_max_tokens=500, lang="indonesia"
+):
     return f"""[BOT]
 --- SYSTEM INFO:
 Today's Time: {datetime.now().strftime("%A, %d %B %Y %I:%M%p")}
@@ -89,7 +91,7 @@ type context ={{
 --- PRIOR USER CONTEXT:
 {{}}
 --- CONVERSATION STYLE:
-"language": "indonesia"
+"language": "{lang}"
 
 --- PRIOR CONVERSATION:
 prior conversation summary: 

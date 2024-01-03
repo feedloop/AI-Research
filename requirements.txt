@@ -12,5 +12,4 @@ psycopg2-binary
 asyncpg
 sqlalchemy
 greenlet
-aspose-pdf
 tiktoken
