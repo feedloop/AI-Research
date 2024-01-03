@@ -4,6 +4,32 @@ import tiktoken
 from datetime import datetime
 
 
+def overlap_ratio(str1, str2):
+    len_str1 = len(str1)
+    len_str2 = len(str2)
+
+    overlap_length = 0
+    for i in range(min(len_str1, len_str2)):
+        if str1[i:] == str2[: len_str1 - i]:
+            overlap_length = len_str1 - i
+            break
+
+    total_length = len_str1 + len_str2 - overlap_length
+    overlap_ratio = overlap_length / total_length if total_length > 0 else 0
+
+    return overlap_ratio
+
+
+def overlap_check(new_list, string):
+    for existing_string in new_list:
+        if (
+            overlap_ratio(existing_string, string) >= 0.5
+            or overlap_ratio(string, existing_string) >= 0.5
+        ):
+            return False
+    return True
+
+
 def count_tokens_tiktoken(string, encoding_name="cl100k_base"):
     encoding = tiktoken.get_encoding(encoding_name)
     num_tokens = len(encoding.encode(string))
@@ -28,6 +54,28 @@ def get_std_knowledge_prompt(memory):
         for _, facts in info["contexts"].items():
             for fact in facts:
                 prompt += f"- {fact}\n"
+
+        prompt += "\n"
+
+    return prompt
+
+
+def get_no_overlap_knowledge_prompt(memory):
+    iteration = 1
+    prompt = "--- KNOWLEDGE:\n"
+    for resource_name, info in memory.items():
+        prompt = get_base_knowledge_prompt(prompt, iteration, resource_name, info)
+        iteration += 1
+
+        prompt += f"Facts:\n"
+        no_overlap_facts = []
+        for _, facts in info["contexts"].items():
+            for fact in facts:
+                if overlap_check(no_overlap_facts, fact):
+                    no_overlap_facts.append(fact)
+
+        for fact in no_overlap_facts:
+            prompt += f"- {fact}\n"
 
         prompt += "\n"
 
@@ -96,6 +144,12 @@ def get_knowledge_prompt(memory, config="context", token_threshold=500):
             cur_prompt = get_std_knowledge_prompt(sent_knowledge)
         elif config == "auto_merge":
             cur_prompt = get_auto_merge_knowledge_prompt(sent_knowledge)
+        elif config == "no_overlap":
+            cur_prompt = get_no_overlap_knowledge_prompt(sent_knowledge)
+        else:
+            raise ValueError(
+                f"config value must be one from ['context', 'standard', 'auto_merge', 'no_overlap']"
+            )
 
         prompt_len = count_tokens_tiktoken(cur_prompt)
         if prompt_len > token_threshold:
