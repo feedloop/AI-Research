@@ -158,6 +158,13 @@ def get_knowledge_prompt(memory, config="context", token_threshold=500):
     return cur_prompt
 
 
+def get_knowledge_from_prompt(prompt):
+    return [
+        r.split(".pdf\n")[-1]
+        for r in prompt.split("--- KNOWLEDGE:\n")[-1].split("\n\n")[:-4]
+    ]
+
+
 def get_chat_prompt(
     question, memory, config="context", memory_max_tokens=500, lang="indonesia"
 ):
