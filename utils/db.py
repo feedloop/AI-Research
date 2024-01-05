@@ -33,10 +33,16 @@ def get_retrieved_knowledge(cursor, question, resource_ids, top_k):
     return result
 
 
-def delete_facts_resource(conn, cursor, resource_id):
+def delete_facts_resource(conn, cursor, resource_id, page_num=0):
     delete_query = """
-    DELETE FROM fact WHERE resource_id = %s;
+    DELETE FROM fact WHERE resource_id = %s
     """
+    if page_num > 0:
+        delete_query+=" AND number = %s"
+        cursor.execute(delete_query, (resource_id, page_num))
+        conn.commit()
+        return
+    
     cursor.execute(delete_query, (resource_id,))
     conn.commit()
 
@@ -48,3 +54,13 @@ def insert_fact_resource(conn, cursor, data):
     """
     cursor.execute(insert_query, data)
     conn.commit()
+
+def count_facts_resource(cursor, resource_id):
+    get_query = """
+    SELECT COUNT(1) FROM fact WHERE resource_id = %s; 
+    """
+    cursor.execute(get_query, (resource_id,))
+    result = cursor.fetchone()
+
+    return result
+

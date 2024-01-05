@@ -5,6 +5,7 @@ from langchain.chat_models import AzureChatOpenAI
 from langchain.embeddings import AzureOpenAIEmbeddings
 
 client = AzureOpenAI(
+    api_key=os.getenv("AZURE_OPENAI_KEY"),
     api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
 )
@@ -12,7 +13,7 @@ client = AzureOpenAI(
 
 def get_completions_gpt35_16k(msg, temp=0.1):
     completion = client.chat.completions.create(
-        model=os.getenv("AZURE_DEPLOYMENT_NAME"), messages=msg, temperature=temp
+        model=os.getenv("turbo-16k"), messages=msg, temperature=temp
     )
 
     return completion

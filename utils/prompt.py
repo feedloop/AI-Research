@@ -189,3 +189,29 @@ ANSWER PROPERLY WITH FOLLOWING JSON FORMAT!:
   "replySuggestions": <given bot response, suggest max 3 possible reply for user to choose from, type: string[]>
 }}
 ANSWER ONLY AS JSON WITH ABOVE DEFINED FORMAT!"""
+
+def get_eval_prompt(question, expected_answer, answer):
+    data = f"""Question:
+{question}
+---
+
+Expected answer:
+{expected_answer}
+---
+
+Current answer:
+{answer}
+---
+"""
+    json_format = """
+Evaluate Current answer based on similarity of information implied compared to Expected answer. Irrelevant information should deduct the similarity percentage. Response with following valid JSON format:
+
+{ 
+
+  "percentage": <percentage>,
+
+  "reasons": <explain reasons for the evaluation in 100 words>,
+
+}
+"""
+    return data+json_format
