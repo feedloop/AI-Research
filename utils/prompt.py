@@ -204,14 +204,17 @@ Current answer:
 ---
 """
     json_format = """
-Evaluate Current answer based on similarity of information implied compared to Expected answer. Irrelevant information should deduct the similarity percentage. Response with following valid JSON format:
+Evaluate Current answer compared to Expected answer. Response with following valid JSON format:
 
-{ 
+{{ 
+    "similarity": <similarity percentage of current answer to expected answer>,
 
-  "percentage": <percentage>,
+    "correctness": <correctness percentage of current answer to expected answer>,
 
-  "reasons": <explain reasons for the evaluation in 100 words>,
+    "relevancy: <relevancy percentage of current answer to question>,
 
-}
+    "reasons": <explain reasons for the evaluation in about 50 words>
+
+}}
 """
     return data+json_format

@@ -167,3 +167,5 @@ cython_debug/
 pdfs/
 result/
 test_set/
+gpt_answer/
+eval_result/
