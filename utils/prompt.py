@@ -36,94 +36,92 @@ def count_tokens_tiktoken(string, encoding_name="cl100k_base"):
     return num_tokens
 
 
-def get_base_knowledge_prompt(prompt, iteration, resource_name, info):
+def get_base_facts_prompt(prompt, iteration, resource_name, info):
     prompt += f"{iteration}. {resource_name}.{info['filetype']}\n"
     prompt += f"Doc URL: {os.getenv('BASE_URL')}{info['project_id']}/{resource_name}.{info['filetype']}\n"
 
-    return prompt
+    resource_type = resource_name.split("- ")[-1]
+    return prompt, resource_type
 
 
-def get_std_knowledge_prompt(memory):
-    iteration = 1
-    prompt = "--- KNOWLEDGE:\n"
-    for resource_name, info in memory.items():
-        prompt = get_base_knowledge_prompt(prompt, iteration, resource_name, info)
-        iteration += 1
-
-        prompt += f"Facts:\n"
-        for _, facts in info["contexts"].items():
-            for fact in facts:
-                prompt += f"- {fact}\n"
-
-        prompt += "\n"
-
-    return prompt
-
-
-def get_no_overlap_knowledge_prompt(memory):
-    iteration = 1
-    prompt = "--- KNOWLEDGE:\n"
-    for resource_name, info in memory.items():
-        prompt = get_base_knowledge_prompt(prompt, iteration, resource_name, info)
-        iteration += 1
-
-        prompt += f"Facts:\n"
-        no_overlap_facts = []
-        for _, facts in info["contexts"].items():
-            for fact in facts:
-                if overlap_check(no_overlap_facts, fact):
-                    no_overlap_facts.append(fact)
-
-        for fact in no_overlap_facts:
+def get_std_facts_prompt(info):
+    prompt += f"Facts:\n"
+    for _, facts in info["contexts"].items():
+        for fact in facts:
             prompt += f"- {fact}\n"
 
-        prompt += "\n"
+    return prompt
+
+
+def get_no_overlap_facts_prompt(info):
+    prompt = f"Facts:\n"
+    no_overlap_facts = []
+    for _, facts in info["contexts"].items():
+        for fact in facts:
+            if overlap_check(no_overlap_facts, fact):
+                no_overlap_facts.append(fact)
+
+    for fact in no_overlap_facts:
+        prompt += f"- {fact}\n"
 
     return prompt
 
 
-def get_auto_merge_knowledge_prompt(memory):
-    iteration = 1
-    prompt = "--- KNOWLEDGE:\n"
-    for resource_name, info in memory.items():
-        prompt = get_base_knowledge_prompt(prompt, iteration, resource_name, info)
-        iteration += 1
-
-        prompt += f"Facts:\n"
-        for context, facts in info["contexts"].items():
-            child_len = sum(len(fact) for fact in facts)
-            if child_len < len(context) // 2:
-                for fact in facts:
-                    prompt += f"- {fact}\n"
-            else:
-                prompt += f"- {context}\n"
-
-        prompt += "\n"
-
-    return prompt
-
-
-def get_context_knowledge_prompt(memory):
-    iteration = 1
-    prompt = "--- KNOWLEDGE:\n"
-    for resource_name, info in memory.items():
-        prompt = get_base_knowledge_prompt(prompt, iteration, resource_name, info)
-        iteration += 1
-
-        count_ctx = 1
-        for context, facts in info["contexts"].items():
-            prompt += f"Context {count_ctx}: {context}\n"
-            prompt += f"Facts from Context {count_ctx}:\n"
+def get_auto_merge_facts_prompt(info):
+    prompt = f"Facts:\n"
+    for context, facts in info["contexts"].items():
+        child_len = sum(len(fact) for fact in facts)
+        if child_len < len(context) // 2:
             for fact in facts:
                 prompt += f"- {fact}\n"
-            count_ctx += 1
+        else:
+            prompt += f"- {context}\n"
 
+    prompt += "\n"
+
+    return prompt
+
+
+def get_context_facts_prompt(info):
+    prompt = ""
+    count_ctx = 1
+    for context, facts in info["contexts"].items():
+        prompt += f"Context {count_ctx}: {context}\n"
+        prompt += f"Facts from Context {count_ctx}:\n"
+        for fact in facts:
+            prompt += f"- {fact}\n"
+        count_ctx += 1
+
+    prompt += "\n"
+
+    return prompt
+
+
+def get_facts_prompt(memory):
+    iteration = 1
+    prompt = "--- KNOWLEDGE:\n"
+    for resource_name, info in memory.items():
+        prompt, resource_type = get_base_facts_prompt(
+            prompt, iteration, resource_name, info
+        )
+        iteration += 1
+
+        if "ParentChild" in resource_type:
+            facts_prompt = get_auto_merge_facts_prompt(info)
+        elif "SentWindow" in resource_type:
+            facts_prompt = get_no_overlap_facts_prompt(info)
+        elif "context_fact" in resource_type or "summary_fact" in resource_type:
+            facts_prompt = get_context_facts_prompt(info)
+        else:
+            facts_prompt = get_std_facts_prompt(info)
+
+        prompt += facts_prompt
         prompt += "\n"
 
     return prompt
 
 
-def get_knowledge_prompt(memory, config="context", token_threshold=500):
+def get_knowledge_prompt(memory, token_threshold=500):
     sent_knowledge = {}
     cur_prompt = ""
     for r in memory:
@@ -138,19 +136,7 @@ def get_knowledge_prompt(memory, config="context", token_threshold=500):
 
         sent_knowledge[r["name"]]["contexts"][r["context"]].append(r["fact"])
 
-        if config == "context":
-            cur_prompt = get_context_knowledge_prompt(sent_knowledge)
-        elif config == "standard":
-            cur_prompt = get_std_knowledge_prompt(sent_knowledge)
-        elif config == "auto_merge":
-            cur_prompt = get_auto_merge_knowledge_prompt(sent_knowledge)
-        elif config == "no_overlap":
-            cur_prompt = get_no_overlap_knowledge_prompt(sent_knowledge)
-        else:
-            raise ValueError(
-                f"config value must be one from ['context', 'standard', 'auto_merge', 'no_overlap']"
-            )
-
+        cur_prompt = get_facts_prompt(sent_knowledge)
         prompt_len = count_tokens_tiktoken(cur_prompt)
         if prompt_len > token_threshold:
             break
@@ -165,9 +151,7 @@ def get_knowledge_from_prompt(prompt):
     ]
 
 
-def get_chat_prompt(
-    question, memory, config="context", memory_max_tokens=500, lang="indonesia"
-):
+def get_chat_prompt(question, memory, memory_max_tokens=500, lang="indonesia"):
     return f"""[BOT]
 --- SYSTEM INFO:
 Today's Time: {datetime.now().strftime("%A, %d %B %Y %I:%M%p")}
@@ -176,7 +160,7 @@ Today's Time: {datetime.now().strftime("%A, %d %B %Y %I:%M%p")}
 --- USER INFO:
 {{"name":"John","email":"john@feedloop.ai"}}
 
-{get_knowledge_prompt(memory, config=config, token_threshold=memory_max_tokens)}--- CONTEXT SCHEMA:
+{get_knowledge_prompt(memory, token_threshold=memory_max_tokens)}--- CONTEXT SCHEMA:
 type context ={{
 }}
 --- PRIOR USER CONTEXT:
