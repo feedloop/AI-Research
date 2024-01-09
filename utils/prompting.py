@@ -1,128 +1,126 @@
-context_instruction = """
+def context_prompt(pdf_text, language):
+    prompt = f"""
+--- Page content:
+{pdf_text}
+
 --- Instructions:
-1. Split the page content into several chunks in Indonesian language. Do this by going through each sentence, if current sentence has similarities with current chunk, add it to current chunk. If not, start a new chunk.
-2. For each chunk, split into smaller chunks called facts based on key information within the chunk in Indonesian language.
+1. Split the page content into several chunks in {language} language. Do this by going through each sentence, if current sentence has similarities with current chunk, add it to current chunk. If not, start a new chunk.
+2. For each chunk, split into smaller chunks called facts based on key information within the chunk in {language} language.
 
 Provide the output in the following JSON Format:
-{
+{{
   "chunks": [
-    {
+    {{
       "chunk_id": 1,
       "chunk": "First chunk of the article...",
       "facts": [
-        {
-          "fact": "Key information within the first chunk in Indonesian language."
-        },
-        {
-          "fact": "Another key information within the first chunk in Indonesian language."
-        }
+        {{
+          "fact": "Key information within the first chunk in {language} language."
+        }},
+        {{
+          "fact": "Another key information within the first chunk in {language} language."
+        }}
       ]
-    },
-    {
+    }},
+    {{
       "chunk_id": 2,
       "chunk": "Second chunk of the article...",
       "facts": [
-        {
-          "fact": "Key information within the second chunk in Indonesian language."
-        },
-        {
-          "fact": "Another key information within the second chunk in Indonesian language."
-        }
+        {{
+          "fact": "Key information within the second chunk in {language} language."
+        }},
+        {{
+          "fact": "Another key information within the second chunk in {language} language."
+        }}
       ]
-    },
+    }},
     // ... More chunks as needed
   ],
-  "main_idea": "Main idea of this page in Indonesian language",
-}
+  "main_idea": "Main idea of this page in {language} language",
+}}
 """
+    return prompt
 
-summary_instruction = """
+def summary_prompt(pdf_text, language):
+    prompt = f"""
+--- Page content:
+{pdf_text}
+
 --- Instructions:
-
-1. Split the page content into several chunks in Indonesian language. Do this by going through each sentence, if current sentence has similarities with current chunk, add it to current chunk. If not, start a new chunk.
+1. Split the page content into individual chunks, with each chunk representing a single paragraph. Do not rewrite any part of the content, just segment it into distinct paragraphs.
 
 Provide the output in the following JSON Format:
-{
+{{
   "chunks": [
-    {
+    {{
       "chunk_id": 1,
-      "chunk": "First chunk of the article..."
-    },
-    {
+      "chunk": <First chunk of the article...>
+    }},
+    {{
       "chunk_id": 2,
-      "chunk": "Second chunk of the article..."
-    },
+      "chunk": <Second chunk of the article...>
+    }},
     // ... More chunks as needed
   ],
-  "summary": "Combine all chunks into short summary in Indonesian language",
-}
+  "summary": <Combine all chunks into short summary in {language} language>
+}}
 """
+    return prompt
 
-summary_instruction_rec = """
+def summary_prompt_rec(pdf_text, language):
+    prompt = f"""
+--- Paragraph text:
+{pdf_text}
+
 --- Instructions:
-
-1. Split the page content into about 80 words chunks each by going through each sentence. If current sentence has similarities with current chunk, put it in the same chunk.
+1. The paragraph text is too long, split it into 2 chunks with equal length. Do not rewrite any part of the content.
 
 Provide the output in the following JSON Format:
-{
+{{
   "chunks": [
-    {
+    {{
       "chunk_id": 1,
-      "chunk": "First chunk of the article..."
-    },
-    {
+      "chunk": <First chunk of the article...>
+    }},
+    {{
       "chunk_id": 2,
-      "chunk": "Second chunk of the article..."
-    },
-    // ... More chunks as needed
+      "chunk": <Second chunk of the article...>
+    }}
   ],
-  "summary": "Combine all chunks into short summary in Indonesian language",
-}
-"""
-
-def context_prompt(pdf_text):
-    prompt = f"""
---- Page content:
-{pdf_text}
-
-{context_instruction}
+  "summary": <Combine all chunks into short summary in {language} language>,
+}}
 """
     return prompt
 
-def summary_prompt(pdf_text):
+def fact_prompt(pdf_text, cur_summary, language):
     prompt = f"""
---- Page content:
-{pdf_text}
+--- Document Data:
+Current document summary: {cur_summary}
 
-{summary_instruction}
-"""
-    return prompt
+Current page content: {pdf_text}
 
-def summary_prompt_rec(pdf_text):
-    prompt = f"""
---- Page content:
-{pdf_text}
-
-{summary_instruction_rec}
-"""
-    return prompt
-
-fact_instruction = """
 --- Instructions:
 1. Extract all facts from current page
-2. Output as following JSON format in Bahasa Indonesia
-{
+2. Output as following JSON format in {language} language
+{{
 
-  "facts": <{"fact": string, "context":<what is this fact about>}[]>
+  "facts": <{{"fact": string, "context":<what is this fact about>}}[]>
 
   "docSummary": "<resummarize the document by combining previous page summary and current page content>"
 
   "context": <create maximum 50 words description about the document based on docSummary>
 
-}
+}}
 """
+    return prompt
 
-fragment_instruction = """
+def fragment_prompt(pdf_text, cur_summary, language):
+    prompt = f"""
+--- Document:
+Current document summary: {cur_summary}
+
+Current page content: {pdf_text}
+
 --- Instructions:
 Split the current page content into small, semantically meaningful fragments. Here are the steps:
 1. Read through the page content
@@ -134,39 +132,18 @@ Ensure that the generated fragments include all words from the current page cont
 
 Provide the output in the following JSON Format:
 
-{
+{{
   "fragments": [
-    {
-      "fragment": <Input all the Fragment content referring to the original content, in Indonesian>,
-      "topic": <Identify the main topic of the fragment, in Indonesian>,
-    },
+    {{
+      "fragment": <Input all the Fragment content referring to the original content, in {language} language>,
+      "topic": <Identify the main topic of the fragment, in {language} language>,
+    }},
     // Additional fragments follow the same structure if needed
   ],
-  "docSummary": <Create new summary in Indonesian based on previous pages summary and current page content>,
-  "context": <Create max 50 words description about the document in Indonesian based on docSummary>
-}
+  "docSummary": <Create new summary in {language} based on previous pages summary and current page content>,
+  "context": <Create max 50 words description about the document in {language} based on docSummary>
+}}
 
 OUTPUT ONLY JSON FORMAT according to the given schema
-"""
-
-def fact_prompt(pdf_text, cur_summary):
-    prompt = f"""
---- Document Data:
-Current document summary: {cur_summary}
-
-Current page content: {pdf_text}
-
-{fact_instruction}
-"""
-    return prompt
-
-def fragment_prompt(pdf_text, cur_summary):
-    prompt = f"""
---- Document:
-Current document summary: {cur_summary}
-
-Current page content: {pdf_text}
-
-{fragment_instruction}
 """
     return prompt

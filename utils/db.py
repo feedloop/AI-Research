@@ -8,6 +8,15 @@ def get_resource_id(cursor, resource_name):
 
     return result[0]
 
+def get_resource_ids(cursor, resource_name):
+    resource_ids = []
+    query = "SELECT * FROM resource WHERE name ilike %s"
+    cursor.execute(query, (resource_name,))
+    result = cursor.fetchall()
+    for res in result:
+        resource_ids.append(res[0])
+    return resource_ids
+
 
 def get_retrieved_knowledge(cursor, question, resource_ids, top_k):
     query = """
