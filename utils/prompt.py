@@ -218,3 +218,196 @@ Evaluate Current answer compared to Expected answer. Response with following val
 }}
 """
     return data+json_format
+
+def get_eval_ragas_prompt(question, ground_truth, answer, context):
+    return f"""--- Question:
+{question}
+
+--- Ground Truth:
+{ground_truth}
+
+--- Answer:
+{answer}
+
+--- Context:
+{context}
+
+--- Task 1 Rate Precision score:
+Analyze the question, answer, and context then determine whether the context provides essential information that help in answering the question. If yes then Precision score is 1, else 0.
+
+--- Task 2 Calculate Recall score by following steps below:
+1. Identify True Positives (TP) value by counting the number of sentences in the answer that correctly align with and can be attributed to the context.
+2. Divide the TP value (from step 1) by the total number of sentences in the answer. The result is the Recall score.
+
+--- Task 3 Calculate F1 score by following steps below:
+1. Identify TP (the number of statements present in both the answer and the ground truth).
+2. Identify FP (the number of statements in the answer but not found in the ground truth).
+3. Identify FN (the number of statements in the ground truth but not found in the answer).
+4. Calculate F1 score = TP / (TP + 0.5 * (TP + FN))
+
+--- Output:
+Output task 1, 2, and 3 result in below JSON format:
+{{
+    "precision": <Precision score result>,
+
+    "recall": <Recall score result>,
+
+    "f1_score": <F1 score result>
+}}
+"""
+
+def get_eval_ragas_pr(question, answer, context):
+    return f"""--- Question:
+{question}
+
+--- Answer:
+{answer}
+
+--- Context:
+{context}
+
+--- Task 1 Rate Precision score:
+Analyze the question, answer, and context then verify if the context was useful in arriving at the given answer. Give Precision score as 1 if useful, else 0.
+
+--- Task 2 Calculate Recall score by following steps below:
+1. Identify True Positives (TP) value by counting the number of sentences in the answer that can be attributed to the given context.
+2. Divide the TP value (from step 1) by the total number of sentences in the answer. The result is the Recall score.
+
+--- Output:
+Output task 1 and 2 result in below JSON format:
+{{
+    "precision": <Precision score result>,
+
+    "recall": <Recall score result>
+}}
+"""
+
+def get_eval_ragas_cr(question, ground_truth, answer):
+    return f"""--- Question:
+{question}
+
+--- Ground Truth:
+{ground_truth}
+
+--- Answer:
+{answer}
+
+--- Task 1 Rate Relevancy score by following steps below:
+1. Generate a question based on the given answer.
+2. Rate relevancy score by comparing relevancy of the generated question to given question. Score can range from 0 to 1 with 1 being the best.
+
+--- Task 2 Calculate F1 score by following steps below:
+1. Identify TP (the number of statements that are present in both the answer and the ground truth).
+2. Identify FP (the number of statements present in the answer but not found in the ground truth).
+3. Identify FN (the number of statements found in the ground truth but omitted in the answer).
+4. Calculate F1 score = TP / (TP + 0.5 * (TP + FN))
+
+--- Output:
+Output task 1 and 2 result in below JSON format:
+{{
+    "relevancy": <Relevancy score result>,
+
+    "f1_score": <F1 score result>
+}}
+"""
+
+def get_eval_ragas_pr1(question, answer, context):
+    return f"""--- Question:
+{question}
+
+--- Answer:
+{answer}
+
+--- Context:
+{context}
+
+--- Task 1 Rate Precision score:
+Analyze the question, answer, and context then determine whether the context provides essential information that help in answering the question. If yes then Precision score is 1, else 0.
+
+--- Task 2 Calculate Recall score by following steps below:
+1. Identify True Positives (TP) value by counting the number of sentences in the answer that correctly align with and can be attributed to the context.
+2. Divide the TP value (from step 1) by the total number of sentences in the answer. The result is the Recall score.
+
+--- Output:
+Output task 1 and 2 result in below JSON format:
+{{
+    "precision": <Precision score result>,
+
+    "recall": <Recall score result>
+}}
+"""
+
+def get_eval_ragas_cr1(question, ground_truth, answer):
+    return f"""--- Question:
+{question}
+
+--- Ground Truth:
+{ground_truth}
+
+--- Answer:
+{answer}
+
+--- Task 1 Rate Relevancy score by following steps below:
+1. Generate a question based on the given answer.
+2. Rate relevancy score by comparing relevancy of the generated question to given question. Score can range from 0 to 1 with 1 being the best.
+
+--- Task 2 Calculate F1 score by following steps below:
+1. Identify TP (the number of statements present in both the answer and the ground truth).
+2. Identify FP (the number of statements in the answer but not found in the ground truth).
+3. Identify FN (the number of statements in the ground truth but not found in the answer).
+4. Calculate F1 score = TP / (TP + 0.5 * (TP + FN))
+
+--- Output:
+Output task 1 and 2 result in below JSON format:
+{{
+    "relevancy": <Relevancy score result>,
+
+    "f1_score": <F1 score result>
+}}
+"""
+
+def get_eval_ragas_pr2(question, answer, context):
+    return f"""--- Question:
+{question}
+
+--- Answer:
+{answer}
+
+--- Context:
+{context}
+
+--- Instruction:
+Output in below JSON format:
+{{
+    "precision": <Analyze the question, answer, and context then determine whether the context provides essential information that help in answering the question. If yes then Precision score is 1, else 0.>,
+
+    "tp": <Count the number of sentences in the answer that correctly align with and can be attributed to the context.>,
+
+    "total": <Total sentences in the answer.>
+}}
+"""
+
+def get_eval_ragas_cr2(question, ground_truth, answer):
+    return f"""--- Question:
+{question}
+
+--- Ground Truth:
+{ground_truth}
+
+--- Answer:
+{answer}
+
+--- Instruction:
+Output in below JSON format:
+{{
+    "generated_question": <Generate a question based on the given answer.>,
+
+    "relevancy": <Rate the relevancy of the generated question to the given question, score can range from 0 to 1 with 1 being the best.>,
+
+    "tp": <Count the number of statements present in both the answer and the ground truth.>,
+
+    "fp": <Count the number of statements in the answer but not found in the ground truth.>,
+
+    "fn": <Count the number of statements in the ground truth but not found in the answer.>
+}}
+"""
