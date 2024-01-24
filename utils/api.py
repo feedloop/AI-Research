@@ -40,10 +40,19 @@ def get_embeddings_ada(input):
     return response.data[0].embedding
 
 
-def get_langchain_gpt35():
+def get_langchain_gpt35_16k():
     return AzureChatOpenAI(
         azure_deployment=os.getenv("AZURE_DEPLOYMENT_NAME"),
         model="gpt-3.5-turbo-16k",
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+    )
+
+
+def get_langchain_gpt35():
+    return AzureChatOpenAI(
+        azure_deployment="chat",
+        model="gpt-3.5-turbo",
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
         api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
     )
