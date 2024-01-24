@@ -169,3 +169,6 @@ result/
 test_set/
 gpt_answer/
 eval_result/
+trial_eval/
+new_eval_res/
+style_transfer/

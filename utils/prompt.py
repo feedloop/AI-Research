@@ -411,3 +411,250 @@ Output in below JSON format:
     "fn": <Count the number of statements in the ground truth but not found in the answer.>
 }}
 """
+
+def get_eval_ragas_pr_detail1(question, answer, context):
+    input = f"""--- Question:
+{question}
+
+--- Answer:
+{answer}
+
+--- Context:
+{context}
+"""
+    
+    task = """
+--- Task 1:
+From the given context and answer, analyze each sentence in the answer and classify if the sentence can be attributed to the given context or not. Use only Yes (1) or No (0) as a binary classification. Output json with reason. Refer to example1 below on how to perform the task
+
+example1={
+    "question": "What can you tell me about albert Albert Einstein?",
+    "context": "Albert Einstein (14 March 1879 - 18 April 1955) was a German-born theoretical physicist, widely held to be one of the greatest and most influential scientists of all time. He received the 1921 Nobel Prize in Physics 'for his services to theoretical physics, and especially for his discovery of the law of the photoelectric effect', a pivotal step in the development of quantum theory.",
+    "answer": "Albert Einstein born in 14 March 1879 was  German-born theoretical physicist, widely held to be one of the greatest and most influential scientists of all time. He received the 1921 Nobel Prize in Physics for his services to theoretical physics. He published 4 papers in 1905.  Einstein moved to Switzerland in 1895",
+    "classification": [
+        {
+            "statement_1": "Albert Einstein, born on 14 March 1879, was a German-born theoretical physicist, widely held to be one of the greatest and most influential scientists of all time.",
+            "reason": "The date of birth of Einstein is mentioned clearly in the context.",
+            "Attributed": 1,
+        },
+        {
+            "statement_2": "He received the 1921 Nobel Prize in Physics 'for his services to theoretical physics.",
+            "reason": "The exact sentence is present in the given context.",
+            "Attributed": 1,
+        },
+        {
+            "statement_3": "He published 4 papers in 1905.",
+            "reason": "There is no mention about papers he wrote in the given context.",
+            "Attributed": 0,
+        },
+        {
+            "statement_4": "Einstein moved to Switzerland in 1895.",
+            "reason": "There is no supporting evidence for this in the given context.",
+            "Attributed": 0,
+        },
+    ]
+}
+
+--- Task 2:
+From the given question, answer and context verify if the context was useful in arriving at the given answer. Give verdict as 1 if useful, else 0. Output json with reason. Refer to example2 below on how to perform the task
+
+example2=[
+    {
+        "question": "who won 2020 icc world cup?",
+        "context": "Who won the 2022 ICC Men's T20 World Cup?",
+        "answer": "England",
+        "verification": {
+            "reason": "the context was useful in clarifying the situation regarding the 2020 ICC World Cup and indicating that England was the winner of the tournament that was intended to be held in 2020 but actually took place in 2022.",
+            "verdict": 1,
+        },
+    },
+    {
+        "question": "What is the tallest mountain in the world?",
+        "context": "The Andes is the longest continental mountain range in the world, located in South America. It stretches across seven countries and features many of the highest peaks in the Western Hemisphere. The range is known for its diverse ecosystems, including the high-altitude Andean Plateau and the Amazon rainforest.",
+        "answer": "Mount Everest.",
+        "verification": {
+            "reason": "the provided context discusses the Andes mountain range, which, while impressive, does not include Mount Everest or directly relate to the question about the world's tallest mountain.",
+            "verdict": 0,
+        },
+    },
+]
+
+--- Output:
+Combine task 1 and 2 json output into single json with structure like below:
+{
+    "classification": <task 1 json>[],
+
+    "verification": {"reason":<verdict reason from task 2>,"verdict":<verdict score from task 2>}
+}
+"""
+    return input+task
+
+def get_eval_ragas_pr_detail2(question, answer, context):
+    input = f"""--- Question:
+{question}
+
+--- Answer:
+{answer}
+
+--- Context:
+{context}
+"""
+    
+    task = """
+--- Task 1:
+From the given context and answer, analyze each sentence in the answer and classify if the sentence can be attributed to the given context or not. Use only Yes (1) or No (0) as a binary classification. Refer to JSON_example1 below for output.
+
+JSON_example1 = {"classification": {"statement": <sentence from answer>, "reason": <reason for classification>, "Attributed": <classification score>}[]}
+
+--- Task 2:
+From the given question, answer and context verify if the context was useful in arriving at the given answer. Give verdict as 1 if useful, else 0. Refer to JSON_example2 below for output.
+
+JSON_example2= {"verification": {"reason": <reason for verdict>, "verdict": <verdict score>}
+
+--- Output:
+Combine task 1 and 2 JSON output into single json with structure like below:
+{
+    "classification": <task 1 JSON output>[],
+
+    "verification": <task 2 JSON output>
+}
+"""
+    return input+task
+
+def get_eval_ragas_pr_detail3(question, answer, context):
+    input = f"""--- Question:
+{question}
+
+--- Answer:
+{answer}
+
+--- Context:
+{context}
+"""
+    
+    task = """
+--- Task 1 (Classification):
+Analyze each sentence in the provided answer and classify whether the sentence can be attributed to the given context. Use a binary classification system with only "Yes (1)" or "No (0)". Each sentence in the answer should be treated as a separate entry in the JSON array. In cases of ambiguity, classify as "No (0)" and provide a reason for this decision. Provide output based on JSON_example1 below
+
+JSON_example1 = {
+    "classification": [
+        {
+            "statement_1": "<First sentence from answer>",
+            "reason": "<Explanation for classification>",
+            "Attributed": "<1 or 0>"
+        },
+        {
+            "statement_2": "<Second sentence from answer>",
+            "reason": "<Explanation for classification>",
+            "Attributed": "<1 or 0>"
+        }
+        // ... additional sentences
+    ]
+}
+
+--- Task 2 (Verification):
+From the given question, answer and context verify if the context was useful in arriving at the given answer. Give verdict as "1" if useful and "0" if not. Partially useful should be classified as "1". Provide output based on JSON_example2 below
+
+JSON_example2 = {
+    "verification": {
+        "reason": "<Explanation for verdict>",
+        "verdict": "<1 or 0>"
+    }
+}
+
+--- Output:
+Combine the JSON outputs from Task 1 (Classification) and Task 2 (Verification) into a single JSON object. The final JSON should have two keys: "classification" for the array of classifications from Task 1, and "verification" for the verification result from Task 2. Refer to JSON structure below
+
+{
+    "classification": [
+        // Array of classification objects from Task 1
+        // Example: {"statement": "Example sentence", "reason": "Example reason", "Attributed": 1}
+    ],
+    "verification": {
+        // Verification object from Task 2
+        // Example: {"reason": "Example reason for verdict", "verdict": 1}
+    }
+}
+"""
+    return input+task
+
+def get_eval_ragas_cr_detail1(question, ground_truth, answer): 
+    return f"""--- Question:
+{question}
+
+--- Ground Truth:
+{ground_truth}
+
+--- Answer:
+{answer}
+
+--- Instruction:
+Provide output based on JSON structure below:
+{{
+    "relevancy": "Identify if the given answer is noncommittal to the given question. Rate 1 if noncommittal, else 0.",
+
+    "gen_question": "Generate a question in the answer language that is directly related to the given answer.",
+
+    "tp": "List statements that are present in both the answer and the ground truth. These are true positive statements, indicating accurate and relevant information found in both sources.",
+
+    "fp": "List statements that are present in the answer but not found in the ground truth. These are false positive statements, indicating information in the answer that is not corroborated by the ground truth.",
+
+    "fn": "List statements that are present in the ground truth but not found in the answer. These are false negative statements, indicating relevant information omitted in the answer."
+}}
+"""
+
+def get_eval_ragas_cr_trial1(question, answer):
+    return f"""--- Question:
+{question}
+
+--- Answer:
+{answer}
+
+--- Instruction:
+Identify if the given answer is noncommittal to the given question. Rate 1 if noncommittal, else 0. Provide output based on JSON structure below:
+{{
+    "relevancy": <1 or 0>
+}}
+"""
+
+def style_transfer2(prompt):
+    return f"""--- Instruction:
+{prompt} in Indonesian language. Provide output based on JSON structure below:
+{{
+    "formal": <generated paragraph>
+
+    "informal": <rewrite each sentence from the generated paragraph in Indonesian language, informal style. Total sentences must be the same.>
+
+    "alay": <rewrite each sentence from the generated paragraph in Indonesian language, alay style. Total sentences must be the same.>
+
+    "jaksel": <rewrite each sentence from the generated paragraph in Indonesian language, jaksel style. Total sentences must be the same.>
+}}"""
+
+# Generate a 5-sentences paragraph about 
+
+def style_transfer3(prompt):
+    return f"""--- Instruction:
+{prompt} in Indonesian language. Provide output based on JSON structure below:
+{{
+    "formal": <generated questions>
+
+    "informal": <rewrite each question from the generated questions in Indonesian language, informal style. Total questions must be the same.>
+
+    "alay": <rewrite each question from the generated questions in Indonesian language, alay style. Total questions must be the same.>
+
+    "jaksel": <rewrite each question from the generated questions in Indonesian language, jaksel style. Total questions must be the same.>
+}}
+"""
+
+def style_transfer4(prompt):
+    return f"""--- Instruction:
+{prompt} in Indonesian language. Provide output based on JSON structure below:
+{{
+    "formal": <generated text conversation>
+
+    "informal": <rewrite each sentence from the generated text in Indonesian language, informal style. Total sentences must be the same.>
+
+    "alay": <rewrite each sentence from the generated text in Indonesian language, alay style. Total sentences must be the same.>
+
+    "jaksel": <rewrite each sentence from the generated text in Indonesian language, jaksel style. Total sentences must be the same.>
+}}"""

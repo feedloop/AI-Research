@@ -1,9 +1,19 @@
 import os
-from openai import AzureOpenAI
+from openai import AzureOpenAI, OpenAI
 
 from langchain.chat_models import AzureChatOpenAI
 from langchain.embeddings import AzureOpenAIEmbeddings
 
+
+def get_completions_dolphin(msg, temp=0.1):
+    client = OpenAI(
+        api_key=os.getenv("MIXTRAL_DOLPHIN_KEY"),
+        base_url=os.getenv("MIXTRAL_DOLPHIN_ENDPOINT"),
+    )
+    completion = client.chat.completions.create(
+        model="cognitivecomputations/dolphin-2.6-mixtral-8x7b", messages=msg, temperature=temp,
+    )
+    return completion
 
 def get_completions_gpt35_16k(msg, temp=0.1):
     client = AzureOpenAI(

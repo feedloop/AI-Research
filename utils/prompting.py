@@ -73,7 +73,7 @@ def summary_prompt_rec(pdf_text, language):
 {pdf_text}
 
 --- Instructions:
-1. The paragraph text is too long, split it into 2 chunks with equal length. Do not rewrite any part of the content.
+1. Split the paragraph text into 2 chunks with equal length. Do not rewrite any part of the content.
 
 Provide the output in the following JSON Format:
 {{
@@ -91,6 +91,20 @@ Provide the output in the following JSON Format:
 }}
 """
     return prompt
+
+def summary_prompt_rec1(pdf_text, chunk, language):
+    return f"""--- Page content:
+{pdf_text}
+
+--- Extracted data:
+{chunk}
+
+--- Instruction:
+Review both the Page Content and the Extracted Data. Provide a concise explanation in {language} language about the context or relation of extracted data to the page content. Provide the output based on JSON format below:
+{{
+    "context": <your explanation in {language} language here>
+}}
+"""
 
 def fact_prompt(pdf_text, cur_summary, language):
     prompt = f"""
@@ -133,17 +147,9 @@ Ensure that the generated fragments include all words from the current page cont
 Provide the output in the following JSON Format:
 
 {{
-  "fragments": [
-    {{
-      "fragment": <Input all the Fragment content referring to the original content, in {language} language>,
-      "topic": <Identify the main topic of the fragment, in {language} language>,
-    }},
-    // Additional fragments follow the same structure if needed
-  ],
-  "docSummary": <Create new summary in {language} based on previous pages summary and current page content>,
-  "context": <Create max 50 words description about the document in {language} based on docSummary>
+  "fragments":<{{"fragment":<Input all the Fragment content referring to the original content, in {language} language>,"topic":<Identify the main topic of the fragment, in {language} language>}}[]>,
+  "docSummary":<Create new summary in {language} based on previous pages summary and current page content>,
+  "context":<Create max 50 words description about the document in {language} based on docSummary>
 }}
-
-OUTPUT ONLY JSON FORMAT according to the given schema
 """
     return prompt
